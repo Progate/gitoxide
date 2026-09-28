@@ -261,3 +261,18 @@ pub fn mark_at_with_permissions(
 ) -> io::Result<Handle<Closed>> {
     Handle::<Closed>::at_with_permissions(path, directory, cleanup, permissions)
 }
+
+/// The id of the current process, used to only clean up tempfiles owned by it after a `fork()`.
+///
+/// WASI has neither processes ids nor `fork()`, and `std::process::id()` panics there, so every
+/// tempfile is owned by the one and only process.
+pub(crate) fn current_process_id() -> u32 {
+    #[cfg(target_os = "wasi")]
+    {
+        0
+    }
+    #[cfg(not(target_os = "wasi"))]
+    {
+        std::process::id()
+    }
+}

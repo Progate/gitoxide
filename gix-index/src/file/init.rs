@@ -109,7 +109,7 @@ impl File {
 
             (
                 data,
-                filetime::FileTime::from_last_modification_time(
+                last_modification_time(
                     &file
                         .metadata()
                         .or_raise_erased(|| message("An IO error occurred while opening the index"))?,
@@ -136,4 +136,17 @@ impl File {
             checksum: None,
         }
     }
+}
+
+/// `filetime` has no implementation for WASI and panics there, but `std` knows the modification time.
+#[cfg(target_os = "wasi")]
+fn last_modification_time(meta: &std::fs::Metadata) -> filetime::FileTime {
+    meta.modified()
+        .map(filetime::FileTime::from_system_time)
+        .unwrap_or_else(|_| filetime::FileTime::zero())
+}
+
+#[cfg(not(target_os = "wasi"))]
+fn last_modification_time(meta: &std::fs::Metadata) -> filetime::FileTime {
+    filetime::FileTime::from_last_modification_time(meta)
 }

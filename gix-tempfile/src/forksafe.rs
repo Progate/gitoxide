@@ -127,7 +127,7 @@ impl ForksafeTempfile {
                 Writable => TempfileOrTemppath::Tempfile(tempfile),
             },
             cleanup,
-            owning_process_id: std::process::id(),
+            owning_process_id: crate::current_process_id(),
         }
     }
 }
