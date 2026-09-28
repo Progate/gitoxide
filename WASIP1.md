@@ -16,6 +16,12 @@ needs to run `gix` as a `wasm32-wasip1` command inside BrowserOS, on top of upst
 
 All of these are scoped to `target_os = "wasi"` and change nothing for other targets.
 
+## Leniency
+
+`gix-transport` accepts the capabilities of the dummy `capabilities^{}` ref (sent by empty repositories)
+when a minimal server separates them with a space instead of a null byte, as libgit2 does. Other lines
+without a null byte are still rejected.
+
 ## Client-side push
 
 Upstream gitoxide can't push. This branch adds it for blocking clients:

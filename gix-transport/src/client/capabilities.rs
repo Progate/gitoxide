@@ -66,9 +66,15 @@ impl Capabilities {
     ///
     /// Useful in case they are encoded within a `ref` behind a null byte.
     pub fn from_bytes(bytes: &[u8]) -> ExnMessageResult<(Capabilities, usize)> {
-        let delimiter_pos = bytes
-            .find_byte(0)
-            .ok_or_else(|| message("Capabilities were missing entirely as there was no 0 byte").raise())?;
+        let delimiter_pos = match bytes.find_byte(0) {
+            Some(pos) => pos,
+            // Be lenient with minimal servers that separate the capabilities of the dummy ref of an empty repository
+            // with a space instead of a null byte, as in `<null-id> capabilities^{} report-status`, like libgit2 is.
+            None => bytes
+                .find(b"capabilities^{} ")
+                .map(|pos| pos + b"capabilities^{}".len())
+                .ok_or_else(|| message("Capabilities were missing entirely as there was no 0 byte").raise())?,
+        };
         if delimiter_pos + 1 == bytes.len() {
             return Err(message("there was not a single capability behind the delimiter").raise());
         }
@@ -321,5 +327,27 @@ pub mod async_recv {
                 },
             })
         }
+    }
+}
+
+#[cfg(test)]
+mod lenient_dummy_ref {
+    use super::Capabilities;
+
+    #[test]
+    fn space_separated_capabilities_of_the_dummy_ref_are_accepted() {
+        let line = b"0000000000000000000000000000000000000000 capabilities^{} report-status delete-refs";
+        let (caps, pos) = Capabilities::from_bytes(line).expect("lenient parsing");
+        assert_eq!(
+            &line[..pos],
+            b"0000000000000000000000000000000000000000 capabilities^{}"
+        );
+        assert!(caps.contains("report-status"));
+        assert!(caps.contains("delete-refs"));
+    }
+
+    #[test]
+    fn other_lines_without_null_byte_are_still_rejected() {
+        assert!(Capabilities::from_bytes(b"0000000000000000000000000000000000000000 refs/heads/main x").is_err());
     }
 }
