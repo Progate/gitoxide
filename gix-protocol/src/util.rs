@@ -76,6 +76,18 @@ mod with_transport {
         }
     }
 
+    impl<T> SendFlushOnDrop<T>
+    where
+        T: Transport,
+    {
+        /// Record that the interaction already ended by other means, so no flush packet is sent on drop.
+        ///
+        /// This is the case after a `push`, where the server hangs up once it sent its report.
+        pub fn assume_end_of_interaction(&mut self) {
+            self.flush_packet_sent = true;
+        }
+    }
+
     impl<T> Drop for SendFlushOnDrop<T>
     where
         T: Transport,

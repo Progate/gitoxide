@@ -50,6 +50,10 @@ pub mod fetch;
 #[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]
 pub mod connect;
 
+///
+#[cfg(feature = "blocking-network-client")]
+pub mod push;
+
 #[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]
 mod connection;
 #[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]

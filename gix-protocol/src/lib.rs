@@ -75,6 +75,12 @@ pub use handshake::hero::Handshake;
 
 ///
 pub mod ls_refs;
+
+///
+#[cfg(feature = "push")]
+pub mod push;
+#[cfg(all(feature = "push", feature = "blocking-client"))]
+pub use push::function::push;
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 pub use ls_refs::function::LsRefsCommand;
 

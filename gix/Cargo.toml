@@ -205,6 +205,7 @@ async-network-client-async-std = [
 blocking-network-client = [
     "gix-protocol/blocking-client",
     "gix-pack/streaming-input",
+    "gix-pack/generate",
     "dep:gix-transport",
     "attributes",
     "credentials",
