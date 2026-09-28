@@ -13,7 +13,22 @@ use gix_filter::{
 use gix_index::{Entry, entry::Stat};
 use gix_object::FindExt;
 use gix_worktree::Stack;
+#[cfg(not(target_os = "wasi"))]
 use io_close::Close;
+
+/// `io-close` has no implementation for WASI, where closing a file can't report errors
+/// through the preview1 ABI anyway (`fd_close` only fails for invalid descriptors).
+#[cfg(target_os = "wasi")]
+trait Close {
+    fn close(self) -> std::io::Result<()>;
+}
+
+#[cfg(target_os = "wasi")]
+impl Close for std::fs::File {
+    fn close(mut self) -> std::io::Result<()> {
+        self.flush()
+    }
+}
 
 pub struct Context<'a, Find> {
     pub objects: &'a mut Find,
@@ -289,7 +304,7 @@ pub(crate) fn open_file(
         ExecutableBitChange::Remove
     };
     //  not supported on windows
-    #[cfg(windows)]
+    #[cfg(not(unix))]
     let executable_bit_change = ExecutableBitChange::NoChange;
     try_op_or_unlink(path, overwrite_existing, |p| options.open(p)).map(|f| (f, executable_bit_change))
 }
@@ -301,7 +316,7 @@ pub(crate) fn finalize_entry(
     entry: &mut gix_index::Entry,
     file: std::fs::File,
     desired_bytes: u64,
-    #[cfg_attr(windows, allow(unused_variables))] executable_bit_change: ExecutableBitChange,
+    #[cfg_attr(not(unix), allow(unused_variables))] executable_bit_change: ExecutableBitChange,
 ) -> ExnResult {
     // For possibly existing, overwritten files, we must change the file mode explicitly to match the index.
     #[cfg(unix)]
