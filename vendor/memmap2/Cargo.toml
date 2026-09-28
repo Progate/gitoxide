@@ -1,0 +1,29 @@
+# A copy of memmap2 0.9.11 (https://github.com/RazrFalcon/memmap2-rs, MIT OR Apache-2.0)
+# with one addition: `src/wasi.rs`, which emulates read-only and copy-on-write maps on WASI by
+# reading the file into memory. WASI preview1 has no `mmap`, and the upstream stub makes every
+# map fail, which leaves gix unable to read indices, packs or packed-refs there.
+#
+# Consumers building for wasm32-wasip1 use it through `[patch.crates-io]`.
+[package]
+name = "memmap2"
+version = "0.9.11"
+authors = [
+    "Dan Burkert <dan@danburkert.com>",
+    "Yevhenii Reizner <razrfalcon@gmail.com>",
+    "The Contributors",
+]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/RazrFalcon/memmap2-rs"
+documentation = "https://docs.rs/memmap2"
+description = "Cross-platform Rust API for memory-mapped file IO"
+keywords = ["mmap", "memory-map", "io", "file"]
+edition = "2021"
+rust-version = "1.65"
+
+[workspace]
+
+[dependencies]
+stable_deref_trait = { version = "1.0", optional = true }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2.151"
